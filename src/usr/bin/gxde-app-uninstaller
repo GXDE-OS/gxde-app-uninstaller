@@ -38,6 +38,20 @@ function log.warn() { log.log "warn" $@; }
 function log.info() { log.log "info" $@; }
 function log.debug() { log.log "debug" $@; }
 
+function notify-send() {
+
+
+    # Detect user using the display
+    local user=$(who | awk '{print $1}' | head -n 1)
+
+    # Detect uid of the user
+    local uid=$(id -u $user)
+
+    sudo -u $user  DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${uid}/bus notify-send "$@"
+}
+
+source /usr/share/gxde-app-uninstaller/transhell.amber
+load_transhell_debug
 #################################################################
 if [ "$UID" != "0" ]; then
     pkexec $0 $@
@@ -187,12 +201,12 @@ else
     name=$name_i18n
 fi
 
-if $(zenity --question --width=400 --text="Going to uninstall $name.\nIf this operation is made by you, please click Confirm to proceed uninstall" ); then
+if $(zenity --question --width=400 --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $name.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
     (
         gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH
         ret=$?
         if [ "$ret" != "0" ]; then
-            zenity --error --width 768 --text "$name failed to uninstall.\nUse the command below to see output.\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH"
+            zenity --error --width 768 --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH"
             exit -1
         fi
     ) &
@@ -202,9 +216,9 @@ if $(zenity --question --width=400 --text="Going to uninstall $name.\nIf this op
         while kill -0 $cmd_pid 2> /dev/null; do
             sleep 1
         done
-    ) | zenity --progress --text="Uninstalling..." --pulsate --auto-close --no-cancel --width 400
+    ) | zenity --progress --text="${TRANSHELL_CONTENT_UNINSTALLING}" --pulsate --auto-close --no-cancel --width 400
     wait $cmd_pid
-    exit $?
-else
-    exit -1
+    notify-send -i gxde-deb-installer -a "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "$name ${TRANSHELL_CONTENT_GXDE_APP_UNINSTALL_FINISHED}."
+
+
 fi

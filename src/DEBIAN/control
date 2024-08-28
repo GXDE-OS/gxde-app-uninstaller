@@ -4,8 +4,8 @@ Priority: optional
 Section: utils
 Maintainer: shenmo <jifengshenmo@outlook.com>
 Installed-Size: 10.2 kB
-Depends: zenity,bash,packagekit
-Recommended: dpkg
+Depends: zenity,bash,libnotify-bin
+Recommends: dpkg,packagekit
 Homepage: https://gitee.com/GXDE-OS/gxde-app-uninstaller
 Download-Size: 1,344 B
 Description: GXDE APP Uninstaller
