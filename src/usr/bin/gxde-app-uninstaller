@@ -133,7 +133,7 @@ if [ "$1" = "desktop-name" ]; then
     }
 
     # 保存并验证绝对路径
-    find_desktop_file_test $1
+    find_desktop_file_test $2
 
     ABSOLUTE_PATH_NO_REALPATH=$(find_desktop_file $1)
     if [[ $? -ne 0 ]]; then
@@ -154,7 +154,7 @@ if [ "$1" = "desktop-name" ]; then
         exit -1
     fi
 elif [ "$1" = "file" ]; then
-    ABSOLUTE_PATH_NO_REALPATH=$1
+    ABSOLUTE_PATH_NO_REALPATH=$2
     if [[ $? -ne 0 ]]; then
         zenity --error --text="Error: .desktop file not found for $1." --width=400
         exit -1
