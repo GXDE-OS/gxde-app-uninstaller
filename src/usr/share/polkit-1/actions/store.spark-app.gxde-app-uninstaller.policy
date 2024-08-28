@@ -4,7 +4,7 @@
 <policyconfig>
     <vendor>Spark Store</vendor>
     <icon_name>x-package-repository</icon_name>
-    <action id="store.spark-app.ss-do-upgrade-worker">
+    <action id="store.spark-app.gxde-app-uninstaller">
         <description>运行卸载器需要权限</description>
         <message>要使用卸载器需要权限</message>
         <defaults>

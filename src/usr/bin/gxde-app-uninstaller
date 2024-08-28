@@ -98,6 +98,10 @@ XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
         # 构建可能的 .desktop 文件路径
         echo "Checking directory: $dir/applications"
         if [[ -f "$dir/applications/$desktop_file" ]]; then
+                # 检查$dir是否以/结尾，如果是则去除最后的/
+                if [[ "$dir" == */ ]]; then
+                   dir="${dir%/}"
+                fi
             echo "Found $dir/applications/$desktop_file."
             return 0
         fi
@@ -112,6 +116,10 @@ find_desktop_file() {
     IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
     for dir in "${dirs[@]}"; do
         if [[ -f "$dir/applications/$desktop_file" ]]; then
+           # 检查$dir是否以/结尾，如果是则去除最后的/
+                if [[ "$dir" == */ ]]; then
+                   dir="${dir%/}"
+                fi
             echo "$dir/applications/$desktop_file"
             return 0
         fi

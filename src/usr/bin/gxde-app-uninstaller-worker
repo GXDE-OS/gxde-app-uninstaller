@@ -62,8 +62,6 @@ fi
 ####################################变量配置（用于后续支持多个包管理系统）
 # 清除先前的变量值
 unset ABSOLUTE_PATH PKGNAME_GUESS DPKG_LIST_FILE ACE_ENV_PATH
-# 定义环境路径变量(beta,先写死再说，后面上数组)
-ACE_ENV_PATH="/opt/apps/amber-ce-bookworm/files/ace-env"
 
 ####################################验证输入有效性
 # 保存并验证绝对路径
@@ -74,23 +72,40 @@ log.debug "ABSOLUTE_PATH=$(realpath $1)"
 log.debug "ABSOLUTE_PATH_NO_REALPATH=$1"
 # 验证是否为desktop文件
 	if [ ! -e $ABSOLUTE_PATH ];then
-         echo -e "\e[31m[WARN] $ABSOLUTE_PATH does not exist. May have already been uninstalled. Ignore it. \e[0m"
-		exit
+         echo -e "\e[31m[ERROR] $ABSOLUTE_PATH does not exist. May have already been uninstalled.  \e[0m"
+		exit 1
     fi
     if [[ ! $ABSOLUTE_PATH == *.desktop ]]; then
-    		log.error "Error: The file is not a desktop file."
+    		log.error "The file is not a desktop file."
     		exit 1
 	fi
 
 
-#############################################转发请求去不同的处理器
+#############################################转发请求去ACE不同的卸载器
 
-if [[ $ABSOLUTE_PATH_NO_REALPATH = "$ACE_ENV_PATH"* ]]; then
-#这里有坨屎，amber-ce-bookworm是一个软链接，如果用realpath后面会对不上去
-log.info "It is an ACE package, pass it to ACE uninstaller"
-/opt/apps/amber-ce-bookworm/files/bin/ace-bookworm-uninstall-helper "${ABSOLUTE_PATH_NO_REALPATH}"
-exit $?
-fi
+### 这里面全是屎
+# ACE 卸载器需要一个/usr/share的地址，但是暴露给主机的是一个data-dir
+# 后续可能需要改一下策略，这个东西是为了避免主机被ACE的环境影响做的
+# 也可能一直这样屎下去，反正用户无感
+# 1. 检查已有的环境
+# 查找/opt/apps/目录下以amber-ce-开头的目录
+ACE_ENV_PATHS=$(find "/opt/apps" -maxdepth 1 -name "amber-ce-*")
+echo $ACE_ENV_PATHS
+# 2. 合成路径并进行匹配
+for ACE_ENV_PATH in $ACE_ENV_PATHS; do
+    # 提取关键词（amber-ce-后面的部分）
+    KEYWORD=$(basename "$ACE_ENV_PATH" | sed 's/^amber-ce-//')
+    # 合成路径
+    COMBINED_PATH="/opt/apps/amber-ce-$KEYWORD/files/ace-env"
+    MODIFIED_PATH="${ABSOLUTE_PATH_NO_REALPATH//\/flamescion-container-tools\/data-dir\//\/usr\/share\/}"
+    echo ${MODIFIED_PATH}
+    # 3. 逐条验证$ABSOLUTE_PATH_NO_REALPATH变量是否以合成路径开头
+    if [[ "$ABSOLUTE_PATH_NO_REALPATH" == "$COMBINED_PATH"* ]]; then
+        # 如果匹配，执行uninstall-helper命令
+        ace-"$KEYWORD"-uninstall-helper "${MODIFIED_PATH}"
+        exit $?
+    fi
+done
 
 
 #############################################pkcon卸载
