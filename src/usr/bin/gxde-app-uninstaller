@@ -1,5 +1,4 @@
 #!/bin/bash
-echo $XDG_DATA_DIRS
 # ===== Log =====
 # log.info xxx
 # log.warn xxx
@@ -25,10 +24,10 @@ function log.log() {
     shift 1
 
     case $level in
-    error) log.color_output "0;31" "[ERROR] $@" ;;
-    warn) log.color_output "1;33" "[WARN] $@" ;;
-    info) log.color_output "1;37" "[INFO] $@" ;;
-    debug) log.color_output "1;30" "[DEBUG] $@" ;;
+        error) log.color_output "0;31" "[ERROR] $@" ;;
+        warn) log.color_output "1;33" "[WARN] $@" ;;
+        info) log.color_output "1;37" "[INFO] $@" ;;
+        debug) log.color_output "1;30" "[DEBUG] $@" ;;
     esac
 
     return 0
@@ -40,15 +39,20 @@ function log.info() { log.log "info" $@; }
 function log.debug() { log.log "debug" $@; }
 
 #################################################################
-if [ "$UID" != "0" ];then
-pkexec $0 $@
-exit $?
+if [ "$UID" != "0" ]; then
+    pkexec $0 $@
+    exit $?
 fi
-if [ "$#" -ne 1 ]; then
-    zenity --info --text="Usage: $0 desktop-file-name" --width=400
+
+if [ "$#" -ne 2 ]; then
+    zenity --info --text="Usage: $0 desktop-name/file desktop-file-name/desktop-file-path" --width=400
     exit 1
 fi
+
 unset ABSOLUTE_PATH
+
+if [ "$1" = "desktop-name" ]; then
+    log.info "这简直是一座屎山"
 
     # Detect user using the display
     now_user=$(who | awk '{print $1}' | head -n 1)
@@ -56,130 +60,150 @@ unset ABSOLUTE_PATH
     # Detect uid of the user
     uid_now_user=$(id -u $now_user)
 
-
-XDG_DATA_DIRS=$(sudo -u $now_user bash -c '
-if [ -d /etc/profile.d ]; then
-  for i in /etc/profile.d/*.sh; do
-    if [ -r $i ]; then
-      . $i
+    XDG_DATA_DIRS=$(sudo -u $now_user bash -c '
+    if [ -d /etc/profile.d ]; then
+        for i in /etc/profile.d/*.sh; do
+            if [ -r $i ]; then
+                . $i
+            fi
+        done
+        unset i
     fi
-  done
-  unset i
-fi
-echo $XDG_DATA_DIRS
-')
+    echo $XDG_DATA_DIRS
+    ')
 
-find_desktop_file_test() {
-    local desktop_file="$1.desktop"
-XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+    find_desktop_file_test() {
+        local desktop_file="$1.desktop"
+        XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
-    # 检查XDG_DATA_DIRS是否为空
-    if [[ -z "$XDG_DATA_DIRS" ]]; then
-        echo "Error: XDG_DATA_DIRS is empty or not set."
-        return 1
-    fi
-    
-    # 输出XDG_DATA_DIRS的内容用于调试
-    echo "XDG_DATA_DIRS: $XDG_DATA_DIRS"
+        # 检查XDG_DATA_DIRS是否为空
+        if [[ -z "$XDG_DATA_DIRS" ]]; then
+            echo "Error: XDG_DATA_DIRS is empty or not set."
+            return 1
+        fi
 
-    # 移除XDG_DATA_DIRS中的多余空格
-    XDG_DATA_DIRS=$(echo "$XDG_DATA_DIRS" | tr -d ' ')
+        # 输出XDG_DATA_DIRS的内容用于调试
+        echo "XDG_DATA_DIRS: $XDG_DATA_DIRS"
 
-    # 将 XDG_DATA_DIRS 以冒号分隔并遍历
-    IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
+        # 移除XDG_DATA_DIRS中的多余空格
+        XDG_DATA_DIRS=$(echo "$XDG_DATA_DIRS" | tr -d ' ')
 
-    # 确认数组是否被正确分割
-    echo "Directories to search:"
-    for dir in "${dirs[@]}"; do
-        echo "$dir"
-    done
-    
-    for dir in "${dirs[@]}"; do
-        # 构建可能的 .desktop 文件路径
-        echo "Checking directory: $dir/applications"
-        if [[ -f "$dir/applications/$desktop_file" ]]; then
+        # 将 XDG_DATA_DIRS 以冒号分隔并遍历
+        IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
+
+        # 确认数组是否被正确分割
+        echo "Directories to search:"
+        for dir in "${dirs[@]}"; do
+            echo "$dir"
+        done
+
+        for dir in "${dirs[@]}"; do
+            # 构建可能的 .desktop 文件路径
+            echo "Checking directory: $dir/applications"
+            if [[ -f "$dir/applications/$desktop_file" ]]; then
                 # 检查$dir是否以/结尾，如果是则去除最后的/
                 if [[ "$dir" == */ ]]; then
-                   dir="${dir%/}"
+                    dir="${dir%/}"
                 fi
-            echo "Found $dir/applications/$desktop_file."
-            return 0
-        fi
-    done
+                echo "Found $dir/applications/$desktop_file."
+                return 0
+            fi
+        done
 
-    log.error "No matching .desktop file found.exit"
-    return 1
-}
-find_desktop_file() {
-    local desktop_file="$1.desktop"
-    
-    IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
-    for dir in "${dirs[@]}"; do
-        if [[ -f "$dir/applications/$desktop_file" ]]; then
-           # 检查$dir是否以/结尾，如果是则去除最后的/
+        log.error "No matching .desktop file found. exit"
+        return 1
+    }
+
+    find_desktop_file() {
+        local desktop_file="$1.desktop"
+
+        IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
+        for dir in "${dirs[@]}"; do
+            if [[ -f "$dir/applications/$desktop_file" ]]; then
+                # 检查$dir是否以/结尾，如果是则去除最后的/
                 if [[ "$dir" == */ ]]; then
-                   dir="${dir%/}"
+                    dir="${dir%/}"
                 fi
-            echo "$dir/applications/$desktop_file"
-            return 0
-        fi
-    done
+                echo "$dir/applications/$desktop_file"
+                return 0
+            fi
+        done
 
-    return 1  # 未找到文件时返回1
-}
+        return 1  # 未找到文件时返回1
+    }
 
+    # 保存并验证绝对路径
+    find_desktop_file_test $1
 
-
-# 保存并验证绝对路径
-find_desktop_file_test $1
-
-ABSOLUTE_PATH_NO_REALPATH=$(find_desktop_file $1)
-if [[ $? -ne 0 ]]; then
-    zenity --error --text="Error: .desktop file not found for $1." --width=400
-    exit -1
-else
-    echo -e "\e[37m[INFO] Found: $ABSOLUTE_PATH_NO_REALPATH \e[0m"
-fi
-# 验证是否为desktop文件
-	if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ];then
-        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH" --width=400
-		exit -1
-    fi
-    if [[ ! $ABSOLUTE_PATH_NO_REALPATH == *.desktop ]]; then
-    		zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." --width=400
-    		exit -1
-	fi
-
-    # 读取应用名称和简介
-    name_orig=$(grep -m 1 '^Name=' "$ABSOLUTE_PATH_NO_REALPATH" | cut -d '=' -f 2)
-    name_i18n=$(grep -m 1 "^Name\[${LANGUAGE}\]\=" "$ABSOLUTE_PATH_NO_REALPATH" | cut -d '=' -f 2)
-	if [ -z "$name_i18n" ] ;then
-	name=$name_orig
-	else
-	name=$name_i18n
-	fi
-
-    if $(zenity --question --width=400 --text="Going to uninstall $name.\nIf this operation is made by you, please click Confirm to proceed uninstall" );then
-    (gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH
-        	ret=$?
-	   if [ "$ret" != "0" ];then
-	       zenity --error --width 768 --text "$name failed to uninstall.\nUse the command below to see output.\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH"
-	       exit -1
-        fi) &
-cmd_pid=$!
-
-
-	(while kill -0 $cmd_pid 2> /dev/null; do
-        sleep 1
-    done)|  zenity --progress --text="Uninstalling..." --pulsate --auto-close --no-cancel --width 400
-wait $cmd_pid
-exit $?
-
-
+    ABSOLUTE_PATH_NO_REALPATH=$(find_desktop_file $1)
+    if [[ $? -ne 0 ]]; then
+        zenity --error --text="Error: .desktop file not found for $1." --width=400
+        exit -1
     else
-    exit -1
+        echo -e "\e[37m[INFO] Found: $ABSOLUTE_PATH_NO_REALPATH \e[0m"
     fi
 
+    # 验证是否为desktop文件
+    if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
+        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH" --width=400
+        exit -1
+    fi
 
+    if [[ ! $ABSOLUTE_PATH_NO_REALPATH == *.desktop ]]; then
+        zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." --width=400
+        exit -1
+    fi
+elif [ "$1" = "file" ]; then
+    ABSOLUTE_PATH_NO_REALPATH=$1
+    if [[ $? -ne 0 ]]; then
+        zenity --error --text="Error: .desktop file not found for $1." --width=400
+        exit -1
+    else
+        echo -e "\e[37m[INFO] Found: $ABSOLUTE_PATH_NO_REALPATH \e[0m"
+    fi
 
+    # 验证是否为desktop文件
+    if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
+        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH" --width=400
+        exit -1
+    fi
 
+    if [[ ! $ABSOLUTE_PATH_NO_REALPATH == *.desktop ]]; then
+        zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." --width=400
+        exit -1
+    fi
+else
+    zenity --info --text="Usage: $0 desktop-name/file desktop-file-name/desktop-file-path" --width=400
+    exit 1
+fi
+
+# 读取应用名称和简介
+name_orig=$(grep -m 1 '^Name=' "$ABSOLUTE_PATH_NO_REALPATH" | cut -d '=' -f 2)
+name_i18n=$(grep -m 1 "^Name\[${LANGUAGE}\]\=" "$ABSOLUTE_PATH_NO_REALPATH" | cut -d '=' -f 2)
+if [ -z "$name_i18n" ]; then
+    name=$name_orig
+else
+    name=$name_i18n
+fi
+
+if $(zenity --question --width=400 --text="Going to uninstall $name.\nIf this operation is made by you, please click Confirm to proceed uninstall" ); then
+    (
+        gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH
+        ret=$?
+        if [ "$ret" != "0" ]; then
+            zenity --error --width 768 --text "$name failed to uninstall.\nUse the command below to see output.\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH"
+            exit -1
+        fi
+    ) &
+    cmd_pid=$!
+
+    (
+        while kill -0 $cmd_pid 2> /dev/null; do
+            sleep 1
+        done
+    ) | zenity --progress --text="Uninstalling..." --pulsate --auto-close --no-cancel --width 400
+    wait $cmd_pid
+    exit $?
+else
+    exit -1
+fi
