@@ -73,7 +73,8 @@ if [ "$1" = "desktop-name" ]; then
     ')
 
     find_desktop_file_test() {
-        local desktop_file="$1.desktop"
+        local desktop_file=$(basename "$1" .desktop)
+        desktop_file="$desktop_file.desktop"
         XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
         # 检查XDG_DATA_DIRS是否为空
@@ -115,8 +116,8 @@ if [ "$1" = "desktop-name" ]; then
     }
 
     find_desktop_file() {
-        local desktop_file="$1.desktop"
-
+        local desktop_file=$(basename "$1" .desktop)
+        desktop_file="$desktop_file.desktop"
         IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
         for dir in "${dirs[@]}"; do
             if [[ -f "$dir/applications/$desktop_file" ]]; then
