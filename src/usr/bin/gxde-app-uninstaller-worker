@@ -111,7 +111,7 @@ fi
 # 验证文件并执行操作
 if [ -f "$DPKG_LIST_FILE" ]; then
 
-    if grep -q "$ABSOLUTE_PATH" "$DPKG_LIST_FILE" || grep -q "/opt/apps/$PKGNAME_GUESS/entries/applications/$PKGNAME_GUESS.desktop" "$DPKG_LIST_FILE"; then
+    if grep -q "$ABSOLUTE_PATH" "$DPKG_LIST_FILE" ; then
         apt autopurge $PKGNAME_GUESS -y
 		ret=$?
 		if [ "$ret" = "0" ];then
