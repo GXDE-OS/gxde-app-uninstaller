@@ -1,0 +1,11 @@
+Package: gxde-app-uninstaller
+Version: 1.0
+Priority: optional
+Section: utils
+Maintainer: shenmo <jifengshenmo@outlook.com>
+Installed-Size: 10.2 kB
+Depends: zenity,dpkg,bash
+Homepage: https://gitee.com/GXDE-OS/gxde-app-uninstaller
+Download-Size: 1,344 B
+Description: GXDE APP Uninstaller
+Architecture: all

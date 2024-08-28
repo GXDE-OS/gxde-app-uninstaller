@@ -1,0 +1,149 @@
+#!/bin/bash
+# ===== Log =====
+# log.info xxx
+# log.warn xxx
+# log.info xxx
+# log.debug xxx
+# 带颜色的echo
+function log.color_output() {
+    local color=$1
+    shift 1
+
+    echo >&2 -e "\033[${color}m$@\033[0m"
+    return 0
+}
+
+# Log is named without prefix "utils." for convenience
+# Usage: log.log <level> ...content
+function log.log() {
+    if [[ $# < 2 ]]; then
+        return -1
+    fi
+
+    local level=$1
+    shift 1
+
+    case $level in
+    error) log.color_output "0;31" "[ERROR] $@" ;;
+    warn) log.color_output "1;33" "[WARN] $@" ;;
+    info) log.color_output "1;37" "[INFO] $@" ;;
+    debug) log.color_output "1;30" "[DEBUG] $@" ;;
+    esac
+
+    return 0
+}
+
+function log.error() { log.log "error" "$@"; }
+function log.warn() { log.log "warn" $@; }
+function log.info() { log.log "info" $@; }
+function log.debug() { log.log "debug" $@; }
+
+# echo -e "\e[30m 黑色 \e[0m"
+# echo -e "\e[31m 红色 \e[0m"
+# echo -e "\e[32m 绿色 \e[0m"
+# echo -e "\e[33m 黄色 \e[0m"
+# echo -e "\e[34m 蓝色 \e[0m"
+# echo -e "\e[35m 紫色 \e[0m"
+# echo -e "\e[36m 青色 \e[0m"
+# echo -e "\e[37m 白色 \e[0m"
+
+log.debug "这个log不太好使，如果过长就炸了，暂时不太能修，可能出现长输出的地方手动写echo去"
+############################################################################开始
+if [ "$UID" != "0" ];then
+log.error "Need to be run as root."
+exit 1
+fi
+# 检查参数个数
+if [ "$#" -ne 1 ]; then
+    log.info "Usage: $0 <desktop-file>"
+    exit 1
+fi
+
+####################################变量配置（用于后续支持多个包管理系统）
+# 清除先前的变量值
+unset ABSOLUTE_PATH PKGNAME_GUESS DPKG_LIST_FILE ACE_ENV_PATH
+# 定义环境路径变量(beta,先写死再说，后面上数组)
+ACE_ENV_PATH="/opt/apps/amber-ce-bookworm/files/ace-env"
+
+####################################验证输入有效性
+# 保存并验证绝对路径
+ABSOLUTE_PATH=$(realpath $1)
+ABSOLUTE_PATH_NO_REALPATH=$1
+
+log.debug "ABSOLUTE_PATH=$(realpath $1)"
+log.debug "ABSOLUTE_PATH_NO_REALPATH=$1"
+# 验证是否为desktop文件
+	if [ ! -e $ABSOLUTE_PATH ];then
+         echo -e "\e[31m[WARN] $ABSOLUTE_PATH does not exist. May have already been uninstalled. Ignore it. \e[0m"
+		exit
+    fi
+    if [[ ! $ABSOLUTE_PATH == *.desktop ]]; then
+    		log.error "Error: The file is not a desktop file."
+    		exit 1
+	fi
+
+
+#############################################转发请求去不同的处理器
+
+if [[ $ABSOLUTE_PATH_NO_REALPATH = "$ACE_ENV_PATH"* ]]; then
+#这里有坨屎，amber-ce-bookworm是一个软链接，如果用realpath后面会对不上去
+log.info "It is an ACE package, pass it to ACE uninstaller"
+/opt/apps/amber-ce-bookworm/files/bin/ace-bookworm-uninstall-helper "${ABSOLUTE_PATH_NO_REALPATH}"
+exit $?
+fi
+
+
+#############################################fallback到deb卸载
+echo -e "\e[37m[INFO] It does not seems like a 3-rd party package manager app. Try deb uninstall... \e[0m"
+# 截取并保存包名
+PKGNAME_GUESS=$(basename "$ABSOLUTE_PATH" .desktop)
+
+# 检查dpkg列表文件
+DPKG_INFO_PATH="/var/lib/dpkg/info"
+if [ -f "$DPKG_INFO_PATH/$PKGNAME_GUESS.list" ]; then
+    DPKG_LIST_FILE="$DPKG_INFO_PATH/$PKGNAME_GUESS.list"
+elif ls "$DPKG_INFO_PATH/${PKGNAME_GUESS}:*.list" 1> /dev/null 2>&1; then
+    DPKG_LIST_FILE=$(ls "$DPKG_INFO_PATH/${PKGNAME_GUESS}:*.list" | head -n 1)
+else
+     echo -e "\e[31m[WARN] No dpkg list file found for $PKGNAME_GUESS.desktop,try to scan to search for the package \e[0m"
+fi
+
+# 验证文件并执行操作
+if [ -f "$DPKG_LIST_FILE" ]; then
+
+    if grep -q "$ABSOLUTE_PATH" "$DPKG_LIST_FILE" || grep -q "/opt/apps/$PKGNAME_GUESS/entries/applications/$PKGNAME_GUESS.desktop" "$DPKG_LIST_FILE"; then
+        apt autopurge $PKGNAME_GUESS -y
+		ret=$?
+		if [ "$ret" = "0" ];then
+			log.info "Operation succeeded."
+			exit 
+		else
+			log.error "Operation failed."
+			exit $ret
+		fi
+			
+    else
+        log.error "Path not found in the dpkg list file,try to scan to search for the package"
+    fi
+fi
+    # 遍历所有list文件 As fallback
+    for file in "$DPKG_INFO_PATH"/*.list; do
+        if grep -q "$ABSOLUTE_PATH" "$file"; then
+            PKGNAME_GUESS=$(basename "$file" .list | cut -d':' -f1)
+            log.info "Get pkgname $PKGNAME_GUESS, uninstalling..."
+            apt autopurge $PKGNAME_GUESS -y
+		ret=$?
+		if [ "$ret" = "0" ];then
+			log.info "Operation succeeded."
+			exit 0
+		else
+			log.error "Operation failed."
+			exit $ret
+		fi
+            
+        fi
+    done
+    log.error "Error: No matching package found."
+    exit 1
+
+
