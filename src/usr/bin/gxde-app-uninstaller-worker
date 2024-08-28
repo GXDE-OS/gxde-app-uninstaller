@@ -93,10 +93,19 @@ exit $?
 fi
 
 
-#############################################fallback到deb卸载
-echo -e "\e[37m[INFO] It does not seems like a 3-rd party package manager app. Try deb uninstall... \e[0m"
+#############################################pkcon卸载
+echo -e "\e[37m[INFO] It does not seems like a 3-rd party package manager app. Try pkcon uninstall... \e[0m"
 # 截取并保存包名
 PKGNAME_GUESS=$(basename "$ABSOLUTE_PATH" .desktop)
+        pkcon remove $PKGNAME_GUESS -y
+		ret=$?
+		if [ "$ret" = "0" ];then
+			log.info "Operation succeeded."
+			exit 
+		else
+			log.error "Operation failed.Try fallback deb uninstaller."
+		fi
+
 
 # 检查dpkg列表文件
 DPKG_INFO_PATH="/var/lib/dpkg/info"
