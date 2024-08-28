@@ -1,2 +1,2 @@
 Usage
-pkexec gxde-app-uninstaller <desktop-file-name>
+gxde-app-uninstaller desktop-name/file desktop-file-name/desktop-file-path
