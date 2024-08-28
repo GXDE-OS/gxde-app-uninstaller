@@ -73,7 +73,7 @@ if [ "$1" = "desktop-name" ]; then
     ')
 
     find_desktop_file_test() {
-        local desktop_file="$1.desktop"
+        local desktop_file="$2.desktop"
         XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
         # 检查XDG_DATA_DIRS是否为空
@@ -115,7 +115,7 @@ if [ "$1" = "desktop-name" ]; then
     }
 
     find_desktop_file() {
-        local desktop_file="$1.desktop"
+        local desktop_file="$2.desktop"
 
         IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
         for dir in "${dirs[@]}"; do
@@ -135,9 +135,9 @@ if [ "$1" = "desktop-name" ]; then
     # 保存并验证绝对路径
     find_desktop_file_test $2
 
-    ABSOLUTE_PATH_NO_REALPATH=$(find_desktop_file $1)
+    ABSOLUTE_PATH_NO_REALPATH=$(find_desktop_file $2)
     if [[ $? -ne 0 ]]; then
-        zenity --error --text="Error: .desktop file not found for $1." --width=400
+        zenity --error --text="Error: .desktop file not found for $2." --width=400
         exit -1
     else
         echo -e "\e[37m[INFO] Found: $ABSOLUTE_PATH_NO_REALPATH \e[0m"
@@ -156,7 +156,7 @@ if [ "$1" = "desktop-name" ]; then
 elif [ "$1" = "file" ]; then
     ABSOLUTE_PATH_NO_REALPATH=$2
     if [[ $? -ne 0 ]]; then
-        zenity --error --text="Error: .desktop file not found for $1." --width=400
+        zenity --error --text="Error: .desktop file not found for $2." --width=400
         exit -1
     else
         echo -e "\e[37m[INFO] Found: $ABSOLUTE_PATH_NO_REALPATH \e[0m"
