@@ -1,0 +1,23 @@
+Source: gxde-app-uninstaller
+Section: utils
+Priority: optional
+Maintainer: shenmo <jifengshenmo@outlook.com>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 13),
+Standards-Version: 4.6.2
+Homepage: https://gitee.com/GXDE-OS/gxde-app-uninstaller
+
+Package: gxde-app-uninstaller
+Architecture: all
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ zenity,
+ bash,
+ libnotify-bin
+Recommends: 
+ dpkg,
+ packagekit
+Description: GXDE APP Uninstaller
+
