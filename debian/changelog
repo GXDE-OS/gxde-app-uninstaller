@@ -1,0 +1,5 @@
+gxde-app-uninstaller (1.0.0) UNRELEASED; urgency=medium
+
+  * Support en_US with transhell
+
+ -- gfdgd_xi <3025613752@qq.com>  Thu, 29 Aug 2024 08:20:31 +0800
