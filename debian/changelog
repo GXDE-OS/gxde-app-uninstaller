@@ -1,3 +1,13 @@
+gxde-app-uninstaller (1.0.1) UNRELEASED; urgency=medium
+
+  * Adjust uninstaller priority. Fix: Desktop applications still exist after uninstall. Reason: lastore will not clean if the package is uninstaller by pkcon
+
+ -- shenmo <shenmo@spark-app.store>  Thu, 29 Aug 2024 08:20:31 +0800
+
+
+
+
+
 gxde-app-uninstaller (1.0.0) UNRELEASED; urgency=medium
 
   * Support en_US with transhell

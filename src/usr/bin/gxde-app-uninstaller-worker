@@ -108,20 +108,7 @@ for ACE_ENV_PATH in $ACE_ENV_PATHS; do
 done
 
 
-#############################################pkcon卸载
-echo -e "\e[37m[INFO] It does not seems like a 3-rd party package manager app. Try pkcon uninstall... \e[0m"
-# 截取并保存包名
-PKGNAME_GUESS=$(basename "$ABSOLUTE_PATH" .desktop)
-        pkcon remove $PKGNAME_GUESS -y
-		ret=$?
-		if [ "$ret" = "0" ];then
-			log.info "Operation succeeded."
-			exit 
-		else
-			log.error "Operation failed.Try fallback deb uninstaller."
-		fi
-
-
+################################## Deb卸载
 # 检查dpkg列表文件
 DPKG_INFO_PATH="/var/lib/dpkg/info"
 if [ -f "$DPKG_INFO_PATH/$PKGNAME_GUESS.list" ]; then
@@ -136,7 +123,7 @@ fi
 if [ -f "$DPKG_LIST_FILE" ]; then
 
     if grep -q "$ABSOLUTE_PATH" "$DPKG_LIST_FILE" ; then
-        apt autopurge $PKGNAME_GUESS -y
+        apt purge $PKGNAME_GUESS -y
 		ret=$?
 		if [ "$ret" = "0" ];then
 			log.info "Operation succeeded."
@@ -155,7 +142,7 @@ fi
         if grep -q "$ABSOLUTE_PATH" "$file"; then
             PKGNAME_GUESS=$(basename "$file" .list | cut -d':' -f1)
             log.info "Get pkgname $PKGNAME_GUESS, uninstalling..."
-            apt autopurge $PKGNAME_GUESS -y
+            apt purge $PKGNAME_GUESS -y
 		ret=$?
 		if [ "$ret" = "0" ];then
 			log.info "Operation succeeded."
@@ -167,6 +154,24 @@ fi
             
         fi
     done
+
+#############################################最后是pkcon卸载
+echo -e "\e[37m[INFO] It  seems like a 3-rd party package manager app. Try pkcon uninstall... \e[0m"
+# 截取并保存包名
+PKGNAME_GUESS=$(basename "$ABSOLUTE_PATH" .desktop)
+        pkcon remove $PKGNAME_GUESS -y
+		ret=$?
+		if [ "$ret" = "0" ];then
+			log.info "Operation succeeded."
+			exit 
+		else
+			log.error "Operation failed"
+            exit $ret
+		fi
+
+
+########如果所有的卸载都没有匹配，则报错退出
+
     log.error "Error: No matching package found."
     exit 1
 
