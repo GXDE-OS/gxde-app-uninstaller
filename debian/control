@@ -13,7 +13,7 @@ Architecture: all
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
- garma | zenity,
+ zenity | garma,
  bash,
  libnotify-bin
 Recommends: 
