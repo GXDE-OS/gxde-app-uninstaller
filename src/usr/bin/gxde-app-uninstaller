@@ -5,6 +5,13 @@
 # log.info xxx
 # log.debug xxx
 # 带颜色的echo
+
+# 如果存在 garma 则指定 zenity 为 garma
+if [[ -f /usr/bin/garma ]]; then
+    shopt -s  expand_aliases  # 用于开启 alias 支持
+    alias zenity='garma'
+fi
+
 function log.color_output() {
     local color=$1
     shift 1
