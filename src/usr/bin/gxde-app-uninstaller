@@ -5,6 +5,15 @@
 # log.info xxx
 # log.debug xxx
 # 带颜色的echo
+
+function zenity() {
+    if [[ /usr/bin/garma ]]; then
+        garma "$@"
+    else
+        zenity "$@"
+    fi
+}
+
 function log.color_output() {
     local color=$1
     shift 1
