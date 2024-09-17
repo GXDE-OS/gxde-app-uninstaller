@@ -7,7 +7,7 @@
 # 带颜色的echo
 
 function zenity() {
-    if [[ /usr/bin/garma ]]; then
+    if [[ -e /usr/bin/garma ]]; then
         garma "$@"
     else
         zenity "$@"
