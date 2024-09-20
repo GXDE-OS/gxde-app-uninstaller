@@ -10,7 +10,7 @@ function zenity() {
     if [[ -e /usr/bin/garma ]]; then
         garma "$@"
     else
-        zenity "$@"
+        $(command -v zenity) "$@"
     fi
 }
 
