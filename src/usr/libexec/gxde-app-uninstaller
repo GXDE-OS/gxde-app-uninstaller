@@ -71,7 +71,7 @@ if [ "$UID" != "0" ]; then
 fi
 
 if [ "$#" -ne 2 ]; then
-    zenity --info --text="Usage: $0 desktop-name/file desktop-file-name/desktop-file-path" --width=400
+    zenity --info --text="Usage: $0 desktop-name/file/package-name desktop-file-name/desktop-file-path/package-name" --width=400
     exit 1
 fi
 
@@ -172,7 +172,7 @@ if [ "$1" = "desktop-name" ]; then
 
     # 验证是否为desktop文件
     if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
-        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH" --width=400
+        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\nsudo gxde-app-uninstaller-worker desktop-file $ABSOLUTE_PATH_NO_REALPATH" --width=400
         exit -1
     fi
 
@@ -191,7 +191,7 @@ elif [ "$1" = "file" ]; then
 
     # 验证是否为desktop文件
     if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
-        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH" --width=400
+        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\nsudo gxde-app-uninstaller-worker desktop-file $ABSOLUTE_PATH_NO_REALPATH" --width=400
         exit -1
     fi
 
@@ -199,6 +199,32 @@ elif [ "$1" = "file" ]; then
         zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." --width=400
         exit -1
     fi
+elif [[ "$1" = "package-name" ]];then
+if $(zenity --question --width=400 --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $2.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
+    (
+        gxde-app-uninstaller-worker package-name $2
+        ret=$?
+        if [ "$ret" != "0" ]; then
+            zenity --error --width 768 --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\nsudo gxde-app-uninstaller-worker package-name $2"
+            exit -1
+        fi
+    ) &
+    cmd_pid=$!
+
+    (
+        while kill -0 $cmd_pid 2> /dev/null; do
+            sleep 1
+        done
+    ) | zenity --progress --text="${TRANSHELL_CONTENT_UNINSTALLING}" --pulsate --auto-close --no-cancel --width 400
+    wait $cmd_pid
+    notify-send -i gxde-deb-installer -a "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "$2 ${TRANSHELL_CONTENT_GXDE_APP_UNINSTALL_FINISHED}."
+
+
+fi
+
+exit
+
+
 else
     zenity --info --text="Usage: $0 desktop-name/file desktop-file-name/desktop-file-path" --width=400
     exit 1
@@ -215,7 +241,7 @@ fi
 
 if $(zenity --question --width=400 --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $name.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
     (
-        gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH
+        gxde-app-uninstaller-worker desktop-file $ABSOLUTE_PATH_NO_REALPATH
         ret=$?
         if [ "$ret" != "0" ]; then
             zenity --error --width 768 --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH"

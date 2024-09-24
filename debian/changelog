@@ -1,3 +1,9 @@
+gxde-app-uninstaller (1.2.0) UNRELEASED; urgency=medium
+
+  * Support package name uninstall
+
+ -- shenmo <shenmo@spark-app.store>  Thu, 29 Aug 2024 08:20:31 +0800
+
 gxde-app-uninstaller (1.1.0) UNRELEASED; urgency=medium
 
   * Use system transhell
