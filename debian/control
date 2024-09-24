@@ -15,7 +15,8 @@ Depends:
  ${misc:Depends},
  garma | zenity,
  bash,
- libnotify-bin
+ libnotify-bin,
+ transhell
 Recommends: 
  dpkg,
  packagekit
