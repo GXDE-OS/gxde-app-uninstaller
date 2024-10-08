@@ -1,4 +1,4 @@
-gxde-app-uninstaller (1.2.0) UNRELEASED; urgency=medium
+gxde-app-uninstaller (1.2.1) UNRELEASED; urgency=medium
 
   * Support package name uninstall
 
