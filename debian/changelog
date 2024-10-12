@@ -1,6 +1,7 @@
-gxde-app-uninstaller (1.2.1) UNRELEASED; urgency=medium
+gxde-app-uninstaller (1.2.2) UNRELEASED; urgency=medium
 
   * Support package name uninstall
+  * 把Libexec装进文件夹
 
  -- shenmo <shenmo@spark-app.store>  Thu, 29 Aug 2024 08:20:31 +0800
 
