@@ -109,6 +109,7 @@ for ACE_ENV_PATH in $ACE_ENV_PATHS; do
     # 合成路径
     COMBINED_PATH="/opt/apps/amber-ce-$KEYWORD/files/ace-env"
     MODIFIED_PATH="${ABSOLUTE_PATH_NO_REALPATH//\/flamescion-container-tools\/data-dir\//\/usr\/share\/}"
+    # 这里如果不考虑cn.flamescion.... 的话是直接用realpath的，不需要手动替换，直接ABSOLUTE_PATH了
     echo ${MODIFIED_PATH}
     # 3. 逐条验证$ABSOLUTE_PATH_NO_REALPATH变量是否以合成路径开头
     if [[ "$ABSOLUTE_PATH_NO_REALPATH" == "$COMBINED_PATH"* ]]; then
