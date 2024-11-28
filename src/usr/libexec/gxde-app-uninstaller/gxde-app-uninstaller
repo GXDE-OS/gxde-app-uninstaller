@@ -52,7 +52,7 @@ fi
 unset ABSOLUTE_PATH
 
 if [ "$1" = "desktop-name" ]; then
-    log.info "这简直是一座屎山"
+    log.warn "这简直是一座屎山"
 
     # Detect user using the display
     now_user=$(who | awk '{print $1}' | head -n 1)
@@ -79,7 +79,7 @@ if [ "$1" = "desktop-name" ]; then
 
         # 检查XDG_DATA_DIRS是否为空
         if [[ -z "$XDG_DATA_DIRS" ]]; then
-            log.info "Error: XDG_DATA_DIRS is empty or not set."
+            log.error "XDG_DATA_DIRS is empty or not set."
             return 1
         fi
 
@@ -95,7 +95,7 @@ if [ "$1" = "desktop-name" ]; then
         # 确认数组是否被正确分割
         log.info "Directories to search:"
         for dir in "${dirs[@]}"; do
-            log.info "$dir"
+            echo "$dir"
         done
 
         for dir in "${dirs[@]}"; do
@@ -125,7 +125,7 @@ if [ "$1" = "desktop-name" ]; then
                 if [[ "$dir" == */ ]]; then
                     dir="${dir%/}"
                 fi
-                log.info "$dir/applications/$desktop_file"
+                echo "$dir/applications/$desktop_file"
                 return 0
             fi
         done
@@ -218,7 +218,7 @@ if $(zenity --question --width=400 --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTAL
         gxde-app-uninstaller-worker desktop-file $ABSOLUTE_PATH_NO_REALPATH
         ret=$?
         if [ "$ret" != "0" ]; then
-            zenity --error --width 768 --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\nsudo gxde-app-uninstaller-worker $ABSOLUTE_PATH_NO_REALPATH"
+            zenity --error --width 768 --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 $@ $ABSOLUTE_PATH_NO_REALPATH"
             exit -1
         fi
     ) &
