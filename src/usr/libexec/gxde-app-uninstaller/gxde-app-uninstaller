@@ -110,8 +110,9 @@ if [ "$1" = "desktop-name" ]; then
                 return 0
             fi
         done
-
+        zenity --error --text="No matching .desktop file found.\n Use the command below to get log\n $0 desktop-name $@ " --width=400
         log.error "No matching .desktop file found. exit"
+
         return 1
     }
 
@@ -165,7 +166,7 @@ elif [ "$1" = "file" ]; then
 
     # 验证是否为desktop文件
     if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
-        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\nsudo gxde-app-uninstaller-worker desktop-file $ABSOLUTE_PATH_NO_REALPATH" --width=400
+        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\n$0 $1 $ABSOLUTE_PATH_NO_REALPATH" --width=400
         exit -1
     fi
 
@@ -179,7 +180,7 @@ if $(zenity --question --width=400 --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTAL
         gxde-app-uninstaller-worker package-name $2
         ret=$?
         if [ "$ret" != "0" ]; then
-            zenity --error --width 768 --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\nsudo gxde-app-uninstaller-worker package-name $2"
+            zenity --error --width 768 --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 package-name $2"
             exit -1
         fi
     ) &
