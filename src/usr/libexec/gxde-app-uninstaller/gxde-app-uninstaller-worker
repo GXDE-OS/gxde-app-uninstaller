@@ -5,38 +5,11 @@
 # log.info xxx
 # log.debug xxx
 # 带颜色的echo
-function log.color_output() {
-    local color=$1
-    shift 1
+log.warn() { echo -e "[\e[33mWARN\e[0m]:  \e[1m$*\e[0m"; }
+log.error()  { echo -e "[\e[31mERROR\e[0m]: \e[1m$*\e[0m"; exit 1; }
+log.info() { echo -e "[\e[96mINFO\e[0m]:  \e[1m$*\e[0m"; }
+log.debug()  { echo -e "[\e[32mDEBUG\e[0m]: \e[1m$*\e[0m"; }
 
-    echo >&2 -e "\033[${color}m$@\033[0m"
-    return 0
-}
-
-# Log is named without prefix "utils." for convenience
-# Usage: log.log <level> ...content
-function log.log() {
-    if [[ $# < 2 ]]; then
-        return -1
-    fi
-
-    local level=$1
-    shift 1
-
-    case $level in
-    error) log.color_output "0;31" "[ERROR] $@" ;;
-    warn) log.color_output "1;33" "[WARN] $@" ;;
-    info) log.color_output "1;37" "[INFO] $@" ;;
-    debug) log.color_output "1;30" "[DEBUG] $@" ;;
-    esac
-
-    return 0
-}
-
-function log.error() { log.log "error" "$@"; }
-function log.warn() { log.log "warn" $@; }
-function log.info() { log.log "info" $@; }
-function log.debug() { log.log "debug" $@; }
 
 # echo -e "\e[30m 黑色 \e[0m"
 # echo -e "\e[31m 红色 \e[0m"
@@ -47,7 +20,7 @@ function log.debug() { log.log "debug" $@; }
 # echo -e "\e[36m 青色 \e[0m"
 # echo -e "\e[37m 白色 \e[0m"
 
-log.debug "这个log不太好使，如果过长就炸了，暂时不太能修，可能出现长输出的地方手动写echo去"
+
 ############################################################################开始
 if [ "$UID" != "0" ];then
 log.error "Need to be run as root."
@@ -83,7 +56,7 @@ log.debug "ABSOLUTE_PATH=$(realpath $2)"
 log.debug "ABSOLUTE_PATH_NO_REALPATH=$2"
 # 验证是否为desktop文件
 	if [ ! -e $ABSOLUTE_PATH ];then
-         echo -e "\e[31m[ERROR] $ABSOLUTE_PATH does not exist. May have already been uninstalled.  \e[0m"
+         log.error "$ABSOLUTE_PATH does not exist. May have already been uninstalled"
 		exit 1
     fi
     if [[ ! $ABSOLUTE_PATH == *.desktop ]]; then
@@ -101,7 +74,7 @@ log.debug "ABSOLUTE_PATH_NO_REALPATH=$2"
 # 1. 检查已有的环境
 # 查找/opt/apps/目录下以amber-ce-开头的目录
 ACE_ENV_PATHS=$(find "/opt/apps" -maxdepth 1 -name "amber-ce-*")
-echo $ACE_ENV_PATHS
+log.info $ACE_ENV_PATHS
 # 2. 合成路径并进行匹配
 for ACE_ENV_PATH in $ACE_ENV_PATHS; do
     # 提取关键词（amber-ce-后面的部分）
@@ -110,7 +83,7 @@ for ACE_ENV_PATH in $ACE_ENV_PATHS; do
     COMBINED_PATH="/opt/apps/amber-ce-$KEYWORD/files/ace-env"
     MODIFIED_PATH="${ABSOLUTE_PATH_NO_REALPATH//\/flamescion-container-tools\/data-dir\//\/usr\/share\/}"
     # 这里如果不考虑cn.flamescion.... 的话是直接用realpath的，不需要手动替换，直接ABSOLUTE_PATH了
-    echo ${MODIFIED_PATH}
+    log.info ${MODIFIED_PATH}
     # 3. 逐条验证$ABSOLUTE_PATH_NO_REALPATH变量是否以合成路径开头
     if [[ "$ABSOLUTE_PATH_NO_REALPATH" == "$COMBINED_PATH"* ]]; then
         # 如果匹配，执行uninstall-helper命令
@@ -128,7 +101,7 @@ if [ -f "$DPKG_INFO_PATH/$PKGNAME_GUESS.list" ]; then
 elif ls "$DPKG_INFO_PATH/${PKGNAME_GUESS}:*.list" 1> /dev/null 2>&1; then
     DPKG_LIST_FILE=$(ls "$DPKG_INFO_PATH/${PKGNAME_GUESS}:*.list" | head -n 1)
 else
-     echo -e "\e[31m[WARN] No dpkg list file found for $PKGNAME_GUESS.desktop,try to scan to search for the package \e[0m"
+     log.warn "No dpkg list file found for $PKGNAME_GUESS.desktop,try to scan to search for the package"
 fi
 
 # 验证文件并执行操作
@@ -168,7 +141,7 @@ fi
     done
 
 #############################################最后是pkcon卸载
-echo -e "\e[37m[INFO] It  seems like a 3-rd party package manager app. Try pkcon uninstall... \e[0m"
+log.info"It  seems like a 3-rd party package manager app. Try pkcon uninstall..."
 # 截取并保存包名
 PKGNAME_GUESS=$(basename "$ABSOLUTE_PATH" .desktop)
         pkcon remove $PKGNAME_GUESS -y

@@ -5,6 +5,11 @@
 # log.info xxx
 # log.debug xxx
 # 带颜色的echo
+log.warn() { echo -e "[\e[33mWARN\e[0m]:  \e[1m$*\e[0m"; }
+log.error()  { echo -e "[\e[31mERROR\e[0m]: \e[1m$*\e[0m"; exit 1; }
+log.info() { echo -e "[\e[96mINFO\e[0m]:  \e[1m$*\e[0m"; }
+log.debug()  { echo -e "[\e[32mDEBUG\e[0m]: \e[1m$*\e[0m"; }
+
 
 HERE=$(dirname $(realpath $0))
 PATH=${HERE}:$PATH
@@ -17,38 +22,7 @@ function zenity() {
     fi
 }
 
-function log.color_output() {
-    local color=$1
-    shift 1
 
-    echo >&2 -e "\033[${color}m$@\033[0m"
-    return 0
-}
-
-# Log is named without prefix "utils." for convenience
-# Usage: log.log <level> ...content
-function log.log() {
-    if [[ $# < 2 ]]; then
-        return -1
-    fi
-
-    local level=$1
-    shift 1
-
-    case $level in
-        error) log.color_output "0;31" "[ERROR] $@" ;;
-        warn) log.color_output "1;33" "[WARN] $@" ;;
-        info) log.color_output "1;37" "[INFO] $@" ;;
-        debug) log.color_output "1;30" "[DEBUG] $@" ;;
-    esac
-
-    return 0
-}
-
-function log.error() { log.log "error" "$@"; }
-function log.warn() { log.log "warn" $@; }
-function log.info() { log.log "info" $@; }
-function log.debug() { log.log "debug" $@; }
 
 function notify-send() {
 
@@ -105,12 +79,12 @@ if [ "$1" = "desktop-name" ]; then
 
         # 检查XDG_DATA_DIRS是否为空
         if [[ -z "$XDG_DATA_DIRS" ]]; then
-            echo "Error: XDG_DATA_DIRS is empty or not set."
+            log.info "Error: XDG_DATA_DIRS is empty or not set."
             return 1
         fi
 
         # 输出XDG_DATA_DIRS的内容用于调试
-        echo "XDG_DATA_DIRS: $XDG_DATA_DIRS"
+        log.info "XDG_DATA_DIRS: $XDG_DATA_DIRS"
 
         # 移除XDG_DATA_DIRS中的多余空格
         XDG_DATA_DIRS=$(echo "$XDG_DATA_DIRS" | tr -d ' ')
@@ -119,20 +93,20 @@ if [ "$1" = "desktop-name" ]; then
         IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
 
         # 确认数组是否被正确分割
-        echo "Directories to search:"
+        log.info "Directories to search:"
         for dir in "${dirs[@]}"; do
-            echo "$dir"
+            log.info "$dir"
         done
 
         for dir in "${dirs[@]}"; do
             # 构建可能的 .desktop 文件路径
-            echo "Checking directory: $dir/applications"
+            log.info "Checking directory: $dir/applications"
             if [[ -f "$dir/applications/$desktop_file" ]]; then
                 # 检查$dir是否以/结尾，如果是则去除最后的/
                 if [[ "$dir" == */ ]]; then
                     dir="${dir%/}"
                 fi
-                echo "Found $dir/applications/$desktop_file."
+                log.info "Found $dir/applications/$desktop_file."
                 return 0
             fi
         done
@@ -151,7 +125,7 @@ if [ "$1" = "desktop-name" ]; then
                 if [[ "$dir" == */ ]]; then
                     dir="${dir%/}"
                 fi
-                echo "$dir/applications/$desktop_file"
+                log.info "$dir/applications/$desktop_file"
                 return 0
             fi
         done
@@ -167,12 +141,12 @@ if [ "$1" = "desktop-name" ]; then
         zenity --error --text="Error: .desktop file not found for $2." --width=400
         exit -1
     else
-        echo -e "\e[37m[INFO] Found: $ABSOLUTE_PATH_NO_REALPATH \e[0m"
+        log.info "Found: $ABSOLUTE_PATH_NO_REALPATH"
     fi
 
     # 验证是否为desktop文件
     if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
-        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\nsudo gxde-app-uninstaller-worker desktop-file $ABSOLUTE_PATH_NO_REALPATH" --width=400
+        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\n$0 $@" --width=400
         exit -1
     fi
 
@@ -186,7 +160,7 @@ elif [ "$1" = "file" ]; then
         zenity --error --text="Error: .desktop file not found for $2." --width=400
         exit -1
     else
-        echo -e "\e[37m[INFO] Found: $ABSOLUTE_PATH_NO_REALPATH \e[0m"
+        log.info "Found: $ABSOLUTE_PATH_NO_REALPATH"
     fi
 
     # 验证是否为desktop文件
