@@ -45,7 +45,7 @@ if [ "$UID" != "0" ]; then
 fi
 
 if [ "$#" -ne 2 ]; then
-    zenity --info --text="Usage: $0 desktop-name/file/package-name desktop-file-name/desktop-file-path/package-name" --width=400
+    zenity --info --text="Usage: $0 desktop-name/file/package-name desktop-file-name/desktop-file-path/package-name" 
     exit 1
 fi
 
@@ -110,7 +110,7 @@ if [ "$1" = "desktop-name" ]; then
                 return 0
             fi
         done
-        zenity --error --text="No matching .desktop file found.\n Use the command below to get log\n $0 desktop-name $@ " --width=400
+        zenity --error --text="No matching .desktop file found.\n Use the command below to get log\n $0 desktop-name $@ " 
         log.error "No matching .desktop file found. exit"
 
         return 1
@@ -139,7 +139,7 @@ if [ "$1" = "desktop-name" ]; then
 
     ABSOLUTE_PATH_NO_REALPATH=$(find_desktop_file $2)
     if [[ $? -ne 0 ]]; then
-        zenity --error --text="Error: .desktop file not found for $2." --width=400
+        zenity --error --text="Error: .desktop file not found for $2." 
         exit -1
     else
         log.info "Found: $ABSOLUTE_PATH_NO_REALPATH"
@@ -147,18 +147,18 @@ if [ "$1" = "desktop-name" ]; then
 
     # 验证是否为desktop文件
     if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
-        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\n$0 $@" --width=400
+        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\n$0 $@" 
         exit -1
     fi
 
     if [[ ! $ABSOLUTE_PATH_NO_REALPATH == *.desktop ]]; then
-        zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." --width=400
+        zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." 
         exit -1
     fi
 elif [ "$1" = "file" ]; then
     ABSOLUTE_PATH_NO_REALPATH=$2
     if [[ $? -ne 0 ]]; then
-        zenity --error --text="Error: .desktop file not found for $2." --width=400
+        zenity --error --text="Error: .desktop file not found for $2." 
         exit -1
     else
         log.info "Found: $ABSOLUTE_PATH_NO_REALPATH"
@@ -166,21 +166,21 @@ elif [ "$1" = "file" ]; then
 
     # 验证是否为desktop文件
     if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
-        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\n$0 $1 $ABSOLUTE_PATH_NO_REALPATH" --width=400
+        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\n$0 $1 $ABSOLUTE_PATH_NO_REALPATH" 
         exit -1
     fi
 
     if [[ ! $ABSOLUTE_PATH_NO_REALPATH == *.desktop ]]; then
-        zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." --width=400
+        zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." 
         exit -1
     fi
 elif [[ "$1" = "package-name" ]];then
-if $(zenity --question --width=400 --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $2.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
+if $(zenity --question  --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $2.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
     (
         gxde-app-uninstaller-worker package-name $2
         ret=$?
         if [ "$ret" != "0" ]; then
-            zenity --error --width 768 --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 package-name $2"
+            zenity --error  --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 package-name $2"
             exit -1
         fi
     ) &
@@ -190,7 +190,7 @@ if $(zenity --question --width=400 --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTAL
         while kill -0 $cmd_pid 2> /dev/null; do
             sleep 1
         done
-    ) | zenity --progress --text="${TRANSHELL_CONTENT_UNINSTALLING}" --pulsate --auto-close --no-cancel --width 400
+    ) | zenity --progress --text="${TRANSHELL_CONTENT_UNINSTALLING}" --pulsate --auto-close --no-cancel 
     wait $cmd_pid
     notify-send -i gxde-deb-installer -a "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "$2 ${TRANSHELL_CONTENT_GXDE_APP_UNINSTALL_FINISHED}."
 
@@ -201,7 +201,7 @@ exit
 
 
 else
-    zenity --info --text="Usage: $0 desktop-name/file/package-name desktop-file-name/desktop-file-path/package-name" --width=400
+    zenity --info --text="Usage: $0 desktop-name/file/package-name desktop-file-name/desktop-file-path/package-name" 
     exit 1
 fi
 
@@ -214,12 +214,12 @@ else
     name=$name_i18n
 fi
 
-if $(zenity --question --width=400 --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $name.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
+if $(zenity --question  --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $name.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
     (
         gxde-app-uninstaller-worker desktop-file $ABSOLUTE_PATH_NO_REALPATH
         ret=$?
         if [ "$ret" != "0" ]; then
-            zenity --error --width 768 --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 $@ $ABSOLUTE_PATH_NO_REALPATH"
+            zenity --error  --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 $@ $ABSOLUTE_PATH_NO_REALPATH"
             exit -1
         fi
     ) &
@@ -229,7 +229,7 @@ if $(zenity --question --width=400 --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTAL
         while kill -0 $cmd_pid 2> /dev/null; do
             sleep 1
         done
-    ) | zenity --progress --text="${TRANSHELL_CONTENT_UNINSTALLING}" --pulsate --auto-close --no-cancel --width 400
+    ) | zenity --progress --text="${TRANSHELL_CONTENT_UNINSTALLING}" --pulsate --auto-close --no-cancel 
     wait $cmd_pid
     notify-send -i gxde-deb-installer -a "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "$name ${TRANSHELL_CONTENT_GXDE_APP_UNINSTALL_FINISHED}."
 
