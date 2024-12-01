@@ -1,8 +1,9 @@
-gxde-app-uninstaller (1.2.3) UNRELEASED; urgency=medium
+gxde-app-uninstaller (1.2.4) UNRELEASED; urgency=medium
 
   * Support package name uninstall
   * 把Libexec装进文件夹
   * 重新使用AOSC Logger
+  * adjust: 使用garma默认排版引擎以适配新动画
 
  -- shenmo <shenmo@spark-app.store>  Thu, 29 Aug 2024 08:20:31 +0800
 
