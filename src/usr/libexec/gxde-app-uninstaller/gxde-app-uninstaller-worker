@@ -67,10 +67,7 @@ log.debug "ABSOLUTE_PATH_NO_REALPATH=$2"
 
 #############################################转发请求去ACE不同的卸载器
 
-### 这里面全是屎
-# ACE 卸载器需要一个/usr/share的地址，但是暴露给主机的是一个data-dir
-# 后续可能需要改一下策略，这个东西是为了避免主机被ACE的环境影响做的
-# 也可能一直这样屎下去，反正用户无感
+
 # 1. 检查已有的环境
 # 查找/opt/apps/目录下以amber-ce-开头的目录
 ACE_ENV_PATHS=$(find "/opt/apps" -maxdepth 1 -name "amber-ce-*")
@@ -81,13 +78,11 @@ for ACE_ENV_PATH in $ACE_ENV_PATHS; do
     KEYWORD=$(basename "$ACE_ENV_PATH" | sed 's/^amber-ce-//')
     # 合成路径
     COMBINED_PATH="/opt/apps/amber-ce-$KEYWORD/files/ace-env"
-    MODIFIED_PATH="${ABSOLUTE_PATH_NO_REALPATH//\/flamescion-container-tools\/data-dir\//\/usr\/share\/}"
-    # 这里如果不考虑cn.flamescion.... 的话是直接用realpath的，不需要手动替换，直接ABSOLUTE_PATH了
-    log.info ${MODIFIED_PATH}
+    
     # 3. 逐条验证$ABSOLUTE_PATH_NO_REALPATH变量是否以合成路径开头
-    if [[ "$ABSOLUTE_PATH_NO_REALPATH" == "$COMBINED_PATH"* ]]; then
+    if [[ "${ABSOLUTE_PATH}" == "$COMBINED_PATH"* ]]; then
         # 如果匹配，执行uninstall-helper命令
-        ace-"$KEYWORD"-uninstall-helper "${MODIFIED_PATH}"
+        ace-"$KEYWORD"-uninstall-helper "${ABSOLUTE_PATH}"
         exit $?
     fi
 done
