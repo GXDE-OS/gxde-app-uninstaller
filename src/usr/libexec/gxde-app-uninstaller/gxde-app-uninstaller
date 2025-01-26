@@ -52,7 +52,7 @@ fi
 unset ABSOLUTE_PATH
 
 if [ "$1" = "desktop-name" ]; then
-    log.warn "这简直是一座屎山"
+
 
     # Detect user using the display
     now_user=$(who | awk '{print $1}' | head -n 1)

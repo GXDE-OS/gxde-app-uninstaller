@@ -1,3 +1,10 @@
+gxde-app-uninstaller (1.4.0) UNRELEASED; urgency=medium
+
+  * 重新支持 ACE 系列
+  * 支持 KMRE 卸载
+
+ -- shenmo <shenmo@spark-app.store>  Thu, 29 Aug 2024 08:20:31 +0800
+
 gxde-app-uninstaller (1.3.0) UNRELEASED; urgency=medium
 
   * Support package name uninstall

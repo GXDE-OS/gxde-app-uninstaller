@@ -10,7 +10,15 @@ log.error()  { echo -e "[\e[31mERROR\e[0m]: \e[1m$*\e[0m"; }
 log.info() { echo -e "[\e[96mINFO\e[0m]:  \e[1m$*\e[0m"; }
 log.debug()  { echo -e "[\e[32mDEBUG\e[0m]: \e[1m$*\e[0m"; }
 
+function kmre-apk-installer() {
 
+
+    # Detect user using the display
+    local user=$(who | awk '{print $1}' | head -n 1)
+
+
+    sudo -u $user  kmre-apk-installer "$@"
+}
 # echo -e "\e[30m 黑色 \e[0m"
 # echo -e "\e[31m 红色 \e[0m"
 # echo -e "\e[32m 绿色 \e[0m"
@@ -63,6 +71,59 @@ log.debug "ABSOLUTE_PATH_NO_REALPATH=$2"
     		log.error "The file is not a desktop file."
     		exit 1
 	fi
+#############################################检查是否是KMRE包
+
+# 0. 如果是 KMRE 包则使用卸载
+DESKTOP_FILE="$ABSOLUTE_PATH"
+# 检查是否包含 X-GXDE-KMREAPP=true
+if  grep -q "X-GXDE-KMREAPP=true" "$DESKTOP_FILE"; then
+# 定义最大等待时间和重试间隔
+MAX_WAIT_TIME=30
+RETRY_INTERVAL=5
+# 读取 X-GXDE-KMRE-PKGNAME 的值
+PKGNAME=$(grep -oP 'X-GXDE-KMRE-PKGNAME=\K.*' "$DESKTOP_FILE")
+
+if [ -z "$PKGNAME" ]; then
+    echo "Error: X-GXDE-KMRE-PKGNAME not found in $DESKTOP_FILE"
+    exit 1
+fi
+
+# 执行卸载操作
+start_time=$(date +%s)
+while true; do
+    # 执行卸载命令
+    kmre-apk-installer uninstall "$PKGNAME"
+    exit_code=$?
+
+    # 检查返回值
+    if [ $exit_code -eq 0 ]; then
+        log.info "Uninstall successful: $PKGNAME"
+        exit 0
+    elif [ $exit_code -eq 114 ]; then
+        # 计算已等待的时间
+        current_time=$(date +%s)
+        elapsed_time=$((current_time - start_time))
+
+        # 检查是否超时
+        if [ $elapsed_time -ge $MAX_WAIT_TIME ]; then
+            log.error "Error: Timeout while waiting to uninstall $PKGNAME"
+            exit 1
+        fi
+
+        # 等待一段时间后重试
+        log.info "Waiting to retry uninstall..."
+        sleep $RETRY_INTERVAL
+    elif [ $exit_code -eq -1 ]; then
+        log.error "Error: Uninstall failed for $PKGNAME"
+        exit 1
+    else
+        log.error "Error: Unknown exit code $exit_code"
+        exit 1
+    fi
+done
+fi
+
+log.info ""Skipping: $DESKTOP_FILE does not contain X-GXDE-KMREAPP=true""
 
 
 #############################################转发请求去ACE不同的卸载器
@@ -78,9 +139,9 @@ for ACE_ENV_PATH in $ACE_ENV_PATHS; do
     KEYWORD=$(basename "$ACE_ENV_PATH" | sed 's/^amber-ce-//')
     # 合成路径
     COMBINED_PATH="/opt/apps/amber-ce-$KEYWORD/files/ace-env"
-    
-    # 3. 逐条验证$ABSOLUTE_PATH_NO_REALPATH变量是否以合成路径开头
+    # 3. 逐条验证$ABSOLUTE_PATH变量是否以合成路径开头
     if [[ "${ABSOLUTE_PATH}" == "$COMBINED_PATH"* ]]; then
+
         # 如果匹配，执行uninstall-helper命令
         ace-"$KEYWORD"-uninstall-helper "${ABSOLUTE_PATH}"
         exit $?
