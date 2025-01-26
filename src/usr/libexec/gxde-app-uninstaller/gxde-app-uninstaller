@@ -60,7 +60,7 @@ if [ "$1" = "desktop-name" ]; then
     # Detect uid of the user
     uid_now_user=$(id -u $now_user)
 
-    XDG_DATA_DIRS=$(sudo -u $now_user bash -c '
+    DIRS_TO_CHECK=$(sudo -u $now_user bash -c '
     if [ -d /etc/profile.d ]; then
         for i in /etc/profile.d/*.sh; do
             if [ -r $i ]; then
@@ -75,22 +75,23 @@ if [ "$1" = "desktop-name" ]; then
     find_desktop_file_test() {
         local desktop_file=$(basename "$1" .desktop)
         desktop_file="$desktop_file.desktop"
-        XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
-
-        # 检查XDG_DATA_DIRS是否为空
-        if [[ -z "$XDG_DATA_DIRS" ]]; then
+        DIRS_TO_CHECK="${DIRS_TO_CHECK:-/usr/local/share:/usr/share}"
+        DIRS_TO_CHECK="${DIRS_TO_CHECK}:/home/$(who | awk '{print $1}' | head -n 1)/.local/share/"
+        # 检查DIRS_TO_CHECK是否为空
+        if [[ -z "$DIRS_TO_CHECK" ]]; then
             log.error "XDG_DATA_DIRS is empty or not set."
             return 1
         fi
 
-        # 输出XDG_DATA_DIRS的内容用于调试
-        log.info "XDG_DATA_DIRS: $XDG_DATA_DIRS"
+        # 输出DIRS_TO_CHECK的内容用于调试
+        
+        log.info "DIRS_TO_CHECK: $DIRS_TO_CHECK"
 
-        # 移除XDG_DATA_DIRS中的多余空格
-        XDG_DATA_DIRS=$(echo "$XDG_DATA_DIRS" | tr -d ' ')
+        # 移除DIRS_TO_CHECK中的多余空格
+        DIRS_TO_CHECK=$(echo "$DIRS_TO_CHECK" | tr -d ' ')
 
-        # 将 XDG_DATA_DIRS 以冒号分隔并遍历
-        IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
+        # 将 DIRS_TO_CHECK 以冒号分隔并遍历
+        IFS=':' read -r -a dirs <<< "$DIRS_TO_CHECK"
 
         # 确认数组是否被正确分割
         log.info "Directories to search:"
@@ -119,7 +120,7 @@ if [ "$1" = "desktop-name" ]; then
     find_desktop_file() {
         local desktop_file=$(basename "$1" .desktop)
         desktop_file="$desktop_file.desktop"
-        IFS=':' read -r -a dirs <<< "$XDG_DATA_DIRS"
+        IFS=':' read -r -a dirs <<< "$DIRS_TO_CHECK"
         for dir in "${dirs[@]}"; do
             if [[ -f "$dir/applications/$desktop_file" ]]; then
                 # 检查$dir是否以/结尾，如果是则去除最后的/
