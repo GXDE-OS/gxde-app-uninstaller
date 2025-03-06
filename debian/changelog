@@ -1,6 +1,6 @@
-gxde-app-uninstaller (1.4.0) UNRELEASED; urgency=medium
+gxde-app-uninstaller (1.5.0) UNRELEASED; urgency=medium
 
-  * 重新支持 ACE 系列
+  * 重新支持 ACE 7.x 系列
   * 支持 KMRE 卸载
 
  -- shenmo <shenmo@spark-app.store>  Thu, 29 Aug 2024 08:20:31 +0800
