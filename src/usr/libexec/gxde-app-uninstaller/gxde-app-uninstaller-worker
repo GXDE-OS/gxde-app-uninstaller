@@ -143,7 +143,7 @@ for ACE_ENV_PATH in $ACE_ENV_PATHS; do
     if [[ "${ABSOLUTE_PATH}" == "$COMBINED_PATH"* ]]; then
 
         # 如果匹配，执行uninstall-helper命令
-        ace-"$KEYWORD"-uninstall-helper "${ABSOLUTE_PATH}"
+        /opt/apps/amber-ce-$KEYWORD/files/bin/ace-uninstall-helper "${ABSOLUTE_PATH}"
         exit $?
     fi
 done
