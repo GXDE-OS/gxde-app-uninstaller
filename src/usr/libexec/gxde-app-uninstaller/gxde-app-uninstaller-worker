@@ -142,6 +142,7 @@ fi
         exit 0
     else
         apt autopurge "$PKGNAME" -y
+        exit_code=$?
                 if [ $exit_code -eq 0 ]; then
                     log.info "Uninstall successful: $PKGNAME in APM"
                     exit 0
