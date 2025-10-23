@@ -1,4 +1,4 @@
-gxde-app-uninstaller (1.6.1) UNRELEASED; urgency=medium
+gxde-app-uninstaller (1.6.2) UNRELEASED; urgency=medium
 
   * 重新支持 ACE 7.x 系列
   * 支持 KMRE 卸载
