@@ -11,8 +11,8 @@ log.info() { echo -e "[\e[96mINFO\e[0m]:  \e[1m$*\e[0m"; }
 log.debug()  { echo -e "[\e[32mDEBUG\e[0m]: \e[1m$*\e[0m"; }
 
 xhost +
-HERE=$(dirname $(realpath $0))
-PATH=${HERE}:$PATH
+HERE=$(dirname $(realpath "$0"))
+PATH="${HERE}:$PATH"
 
 function zenity() {
     if [[ -e /usr/bin/garma ]]; then
@@ -22,25 +22,21 @@ function zenity() {
     fi
 }
 
-
-
 function notify-send() {
-
-
     # Detect user using the display
     local user=$(who | awk '{print $1}' | head -n 1)
-
     # Detect uid of the user
-    local uid=$(id -u $user)
+    local uid=$(id -u "$user")
 
-    sudo -u $user  DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${uid}/bus notify-send "$@"
+    sudo -u "$user" DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${uid}/bus notify-send "$@"
 }
 
 source /opt/bashimport/transhell.sh
 load_transhell_debug
+
 #################################################################
 if [ "$UID" != "0" ]; then
-    pkexec $0 $@
+    pkexec "$0" "$@"
     exit $?
 fi
 
@@ -52,24 +48,21 @@ fi
 unset ABSOLUTE_PATH
 
 if [ "$1" = "desktop-name" ]; then
-
-
     # Detect user using the display
     now_user=$(who | awk '{print $1}' | head -n 1)
-
     # Detect uid of the user
-    uid_now_user=$(id -u $now_user)
+    uid_now_user=$(id -u "$now_user")
 
-    DIRS_TO_CHECK=$(sudo -u $now_user bash -c '
+    DIRS_TO_CHECK=$(sudo -u "$now_user" bash -c '
     if [ -d /etc/profile.d ]; then
         for i in /etc/profile.d/*.sh; do
-            if [ -r $i ]; then
-                . $i
+            if [ -r "$i" ]; then
+                . "$i"
             fi
         done
         unset i
     fi
-    echo $XDG_DATA_DIRS
+    echo "$XDG_DATA_DIRS"
     ')
 
     find_desktop_file_test() {
@@ -77,33 +70,26 @@ if [ "$1" = "desktop-name" ]; then
         desktop_file="$desktop_file.desktop"
         DIRS_TO_CHECK="${DIRS_TO_CHECK:-/usr/local/share:/usr/share}"
         DIRS_TO_CHECK="${DIRS_TO_CHECK}:/home/$(who | awk '{print $1}' | head -n 1)/.local/share/"
+        
         # 检查DIRS_TO_CHECK是否为空
         if [[ -z "$DIRS_TO_CHECK" ]]; then
             log.error "XDG_DATA_DIRS is empty or not set."
             return 1
         fi
 
-        # 输出DIRS_TO_CHECK的内容用于调试
-        
         log.info "DIRS_TO_CHECK: $DIRS_TO_CHECK"
-
-        # 移除DIRS_TO_CHECK中的多余空格
         DIRS_TO_CHECK=$(echo "$DIRS_TO_CHECK" | tr -d ' ')
 
-        # 将 DIRS_TO_CHECK 以冒号分隔并遍历
         IFS=':' read -r -a dirs <<< "$DIRS_TO_CHECK"
 
-        # 确认数组是否被正确分割
         log.info "Directories to search:"
         for dir in "${dirs[@]}"; do
             echo "$dir"
         done
 
         for dir in "${dirs[@]}"; do
-            # 构建可能的 .desktop 文件路径
             log.info "Checking directory: $dir/applications"
             if [[ -f "$dir/applications/$desktop_file" ]]; then
-                # 检查$dir是否以/结尾，如果是则去除最后的/
                 if [[ "$dir" == */ ]]; then
                     dir="${dir%/}"
                 fi
@@ -111,9 +97,8 @@ if [ "$1" = "desktop-name" ]; then
                 return 0
             fi
         done
-        zenity --error --text="No matching .desktop file found.\n Use the command below to get log\n $0 desktop-name $@ " 
+        zenity --error --text="No matching .desktop file found.\n Use the command below to get log\n $0 desktop-name $* " 
         log.error "No matching .desktop file found. exit"
-
         return 1
     }
 
@@ -123,7 +108,6 @@ if [ "$1" = "desktop-name" ]; then
         IFS=':' read -r -a dirs <<< "$DIRS_TO_CHECK"
         for dir in "${dirs[@]}"; do
             if [[ -f "$dir/applications/$desktop_file" ]]; then
-                # 检查$dir是否以/结尾，如果是则去除最后的/
                 if [[ "$dir" == */ ]]; then
                     dir="${dir%/}"
                 fi
@@ -131,75 +115,72 @@ if [ "$1" = "desktop-name" ]; then
                 return 0
             fi
         done
-
-        return 1  # 未找到文件时返回1
+        return 1
     }
 
-    # 保存并验证绝对路径
-    find_desktop_file_test $2
+    # 修复：正确传递带空格的参数
+    find_desktop_file_test "$2"
 
-    ABSOLUTE_PATH_NO_REALPATH=$(find_desktop_file $2)
+    ABSOLUTE_PATH_NO_REALPATH=$(find_desktop_file "$2")
     if [[ $? -ne 0 ]]; then
         zenity --error --text="Error: .desktop file not found for $2." 
-        exit -1
+        exit 1
     else
         log.info "Found: $ABSOLUTE_PATH_NO_REALPATH"
     fi
 
     # 验证是否为desktop文件
-    if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
-        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\n$0 $@" 
-        exit -1
+    if [ ! -e "$ABSOLUTE_PATH_NO_REALPATH" ]; then
+        zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\n$0 $*" 
+        exit 1
     fi
 
-    if [[ ! $ABSOLUTE_PATH_NO_REALPATH == *.desktop ]]; then
+    if [[ ! "$ABSOLUTE_PATH_NO_REALPATH" == *.desktop ]]; then
         zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." 
-        exit -1
+        exit 1
     fi
+
 elif [ "$1" = "file" ]; then
-    ABSOLUTE_PATH_NO_REALPATH=$2
+    ABSOLUTE_PATH_NO_REALPATH="$2"
     if [[ $? -ne 0 ]]; then
         zenity --error --text="Error: .desktop file not found for $2." 
-        exit -1
+        exit 1
     else
         log.info "Found: $ABSOLUTE_PATH_NO_REALPATH"
     fi
 
     # 验证是否为desktop文件
-    if [ ! -e $ABSOLUTE_PATH_NO_REALPATH ]; then
+    if [ ! -e "$ABSOLUTE_PATH_NO_REALPATH" ]; then
         zenity --error --text="$ABSOLUTE_PATH_NO_REALPATH does not exist. May have already been uninstalled. \n Use the command below to see output.\n$0 $1 $ABSOLUTE_PATH_NO_REALPATH" 
-        exit -1
+        exit 1
     fi
 
-    if [[ ! $ABSOLUTE_PATH_NO_REALPATH == *.desktop ]]; then
+    if [[ ! "$ABSOLUTE_PATH_NO_REALPATH" == *.desktop ]]; then
         zenity --error --text="Error: $ABSOLUTE_PATH_NO_REALPATH is not a desktop file." 
-        exit -1
+        exit 1
     fi
-elif [[ "$1" = "package-name" ]];then
-if $(zenity --question  --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $2.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
-    (
-        gxde-app-uninstaller-worker package-name $2
-        ret=$?
-        if [ "$ret" != "0" ]; then
-            zenity --error  --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 package-name $2"
-            exit -1
-        fi
-    ) &
-    cmd_pid=$!
 
-    (
-        while kill -0 $cmd_pid 2> /dev/null; do
-            sleep 1
-        done
-    ) | zenity --progress --text="${TRANSHELL_CONTENT_UNINSTALLING}" --pulsate --auto-close --no-cancel 
-    wait $cmd_pid
-    notify-send -i gxde-deb-installer -a "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "$2 ${TRANSHELL_CONTENT_GXDE_APP_UNINSTALL_FINISHED}."
+elif [[ "$1" = "package-name" ]]; then
+    if $(zenity --question --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $2.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
+        (
+            gxde-app-uninstaller-worker package-name "$2"
+            ret=$?
+            if [ "$ret" != "0" ]; then
+                zenity --error --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 package-name $2"
+                exit 1
+            fi
+        ) &
+        cmd_pid=$!
 
-
-fi
-
-exit
-
+        (
+            while kill -0 $cmd_pid 2> /dev/null; do
+                sleep 1
+            done
+        ) | zenity --progress --text="${TRANSHELL_CONTENT_UNINSTALLING}" --pulsate --auto-close --no-cancel 
+        wait $cmd_pid
+        notify-send -i gxde-deb-installer -a "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "$2 ${TRANSHELL_CONTENT_GXDE_APP_UNINSTALL_FINISHED}."
+    fi
+    exit
 
 else
     zenity --info --text="Usage: $0 desktop-name/file/package-name desktop-file-name/desktop-file-path/package-name" 
@@ -208,20 +189,20 @@ fi
 
 # 读取应用名称和简介
 name_orig=$(grep -m 1 '^Name=' "$ABSOLUTE_PATH_NO_REALPATH" | cut -d '=' -f 2)
-name_i18n=$(grep -m 1 "^Name\[${LANGUAGE}\]\=" "$ABSOLUTE_PATH_NO_REALPATH" | cut -d '=' -f 2)
+name_i18n=$(grep -m 1 "^Name\[${LANGUAGE}\]=" "$ABSOLUTE_PATH_NO_REALPATH" | cut -d '=' -f 2)
 if [ -z "$name_i18n" ]; then
-    name=$name_orig
+    name="$name_orig"
 else
-    name=$name_i18n
+    name="$name_i18n"
 fi
 
-if $(zenity --question  --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $name.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
+if $(zenity --question --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $name.\n${TRANSHELL_CONTENT_UNINSTALL_USER_CONFIRM_TEXT}" ); then
     (
-        gxde-app-uninstaller-worker desktop-file $ABSOLUTE_PATH_NO_REALPATH
+        gxde-app-uninstaller-worker desktop-file "$ABSOLUTE_PATH_NO_REALPATH"
         ret=$?
         if [ "$ret" != "0" ]; then
-            zenity --error  --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 $@ $ABSOLUTE_PATH_NO_REALPATH"
-            exit -1
+            zenity --error --text "$name ${TRANSHELL_CONTENT_UNINSTALL_FAILED}\n${TRANSHELL_CONTENT_USE_COMMAND_BELOW_TO_SEE_OUTPUT}\n$0 $* $ABSOLUTE_PATH_NO_REALPATH"
+            exit 1
         fi
     ) &
     cmd_pid=$!
@@ -233,6 +214,4 @@ if $(zenity --question  --text="${TRANSHELL_CONTENT_GOING_TO_UNINSTALL} $name.\n
     ) | zenity --progress --text="${TRANSHELL_CONTENT_UNINSTALLING}" --pulsate --auto-close --no-cancel 
     wait $cmd_pid
     notify-send -i gxde-deb-installer -a "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "${TRANSHELL_CONTENT_GXDE_APP_UNINSTALLER}" "$name ${TRANSHELL_CONTENT_GXDE_APP_UNINSTALL_FINISHED}."
-
-
 fi
