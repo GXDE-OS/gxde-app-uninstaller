@@ -1,9 +1,10 @@
-gxde-app-uninstaller (1.6.2) UNRELEASED; urgency=medium
+gxde-app-uninstaller (1.6.3) UNRELEASED; urgency=medium
 
   * 重新支持 ACE 7.x 系列
   * 支持 KMRE 卸载
   * 修复 部分平台上无法正常展示窗口的问题
   * 支持 APM 卸载
+  * Fix: Can not handle desktops / appkey that contains space (Cherry Studio)
 
  -- shenmo <shenmo@spark-app.store>  Thu, 29 Aug 2024 08:20:31 +0800
 
