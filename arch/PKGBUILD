@@ -1,5 +1,5 @@
 # Maintainer: CharOfString <root@charofstring.cc>
-pkgname=gxde-app-uninstaller-git
+pkgname=gxde-app-uninstaller
 pkgver=1.6.3
 pkgrel=1
 pkgdesc='GXDE application uninstall helper (APT-based)'
@@ -7,11 +7,12 @@ arch=('any')
 url="https://github.com/GXDE-OS/gxde-app-uninstaller"
 license=('CC-BY-NC-SA-4.0')
 # 除 debian/control 外，脚本还直接调用 zenity、notify-send、sudo ・ Besides debian/control, the scripts call zenity, notify-send and sudo.
-depends=('garma-git' 'zenity' 'libnotify' 'sudo' 'bash' 'polkit' 'transhell-git')
+depends=('garma' 'zenity' 'libnotify' 'sudo' 'bash' 'polkit' 'transhell')
 
 makedepends=('git')
-provides=('gxde-app-uninstaller')
-conflicts=('gxde-app-uninstaller')
+provides=("gxde-app-uninstaller-git=$pkgver")
+conflicts=('gxde-app-uninstaller-git')
+replaces=('gxde-app-uninstaller-git')
 source=()
 sha512sums=()
 
