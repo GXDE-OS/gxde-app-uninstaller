@@ -17,7 +17,8 @@ Depends:
  bash,
  libnotify-bin,
  transhell
-Recommends: 
+Recommends:
+ apm,
  dpkg,
  packagekit
 Description: GXDE APP Uninstaller

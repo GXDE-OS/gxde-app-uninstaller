@@ -1,3 +1,13 @@
+gxde-app-uninstaller (1.6.4) UNRELEASED; urgency=medium
+
+  * 修复 APM 2.0 软件包无法识别/卸载：改用 apm list --installed 和
+    apm remove -y，不再依赖已移除的 amber-pm-debug / dpkg。
+  * 支持从 /var/lib/apm/<pkg>/entries 路径推导包名，兼容没有
+    X-APM-APPID 的 APM desktop。
+  * Recommends: apm。
+
+ -- shenmo <shenmo@spark-app.store>  Sat, 21 Nov 2026 17:35:00 +0800
+
 gxde-app-uninstaller (1.6.3) UNRELEASED; urgency=medium
 
   * 重新支持 ACE 7.x 系列

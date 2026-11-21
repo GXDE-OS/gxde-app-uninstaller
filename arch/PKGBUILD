@@ -1,6 +1,6 @@
 # Maintainer: CharOfString <root@charofstring.cc>
 pkgname=gxde-app-uninstaller
-pkgver=1.6.3
+pkgver=1.6.4
 pkgrel=1
 pkgdesc='GXDE application uninstall helper (APT-based)'
 arch=('any')
